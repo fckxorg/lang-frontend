@@ -4,6 +4,7 @@
 #include <cstring>
 #include "string_funcs.h"
 
+
 template<class Node_T>
 class Node {
  public:
@@ -23,19 +24,20 @@ class Node {
   }
 };
 
-char* serialize(Node<char*> node)
+std::string_view serialize (Node<std::string_view*> node)
 {
-  return node.data;
+  if(node.data && node.type != 5) return *(node.data);
+  return std::string_view("null");
 }
 
 char *parseArg (char *buffer, char **container)
 {
   size_t pos = 0;
-  while(*buffer != '\"' && *buffer != '\0') buffer++;
+  while (*buffer != '\"' && *buffer != '\0') buffer++;
 
   *container = ++buffer;
 
-  while(*buffer != '\"' && *buffer != '\0') buffer++;
+  while (*buffer != '\"' && *buffer != '\0') buffer++;
   *buffer = '\0';
   buffer++;
   return buffer;
@@ -48,9 +50,9 @@ class Tree {
 
   void dumpSubTree (Node<T> *node, std::ofstream &dump_file)
   {
-    assert (node);
 
-    dump_file << "node" << node << "[label=\"{{" << node << "}|{{VALUE|" << node->data << "}|{LEFT|" << node->left
+    dump_file << "node" << node << "[label=\"{{" << node << "}|{TYPE|" << node->type << "}|{VALUE|" << serialize(*node)
+              << "}|{LEFT|" << node->left
               << "}|{RIGHT|" << node->right << "}|{PARENT|" << node->parent << "}}}\",shape=record];" << std::endl;
     if (node->parent)
       {
@@ -128,18 +130,18 @@ class Tree {
  public:
   Node<T> *root = nullptr;
 
-  Node<T>* search(Node<T>* node, T data)
+  Node<T> *search (Node<T> *node, T data)
   {
-    if(strcmp(node->data, data) == 0) return node;
-    Node<T>* left_subtree_node;
-    Node<T>* right_subtree_node;
-    if(node->left) left_subtree_node = search (node->left, data);
+    if (strcmp (node->data, data) == 0) return node;
+    Node<T> *left_subtree_node;
+    Node<T> *right_subtree_node;
+    if (node->left) left_subtree_node = search (node->left, data);
     else left_subtree_node = nullptr;
-    if(node->right) right_subtree_node = search(node->right, data);
+    if (node->right) right_subtree_node = search (node->right, data);
     else right_subtree_node = nullptr;
 
-    if(right_subtree_node) return right_subtree_node;
-    if(left_subtree_node) return left_subtree_node;
+    if (right_subtree_node) return right_subtree_node;
+    if (left_subtree_node) return left_subtree_node;
     return nullptr;
   }
 
@@ -154,9 +156,9 @@ class Tree {
     return root;
   }
 
-  Node<T> *newNode (const T value)
+  Node<T> *newNode (const T value, int type)
   {
-    return new Node<T> (value);
+    return new Node<T> (value, type);
   }
 
   void connectNodeLeft (Node<T> *parent, Node<T> *child)
@@ -236,18 +238,18 @@ class Tree {
     dump_file.close ();
   }
 
-  size_t countNodes(Node<T>* node)
+  size_t countNodes (Node<T> *node)
   {
     size_t n_left_subtree = 0;
     size_t n_right_subtree = 0;
-    if(node->left) n_left_subtree = countNodes (node->left);
-    if(node->right) n_right_subtree = countNodes (node->right);
+    if (node->left) n_left_subtree = countNodes (node->left);
+    if (node->right) n_right_subtree = countNodes (node->right);
     return 1 + n_left_subtree + n_right_subtree;
   }
 
-  bool verificateTree()
+  bool verificateTree ()
   {
-    if(countNodes (root) == n_nodes) return true;
+    if (countNodes (root) == n_nodes) return true;
     return false;
 
   }

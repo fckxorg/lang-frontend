@@ -10,6 +10,17 @@ const int MAX_SINGLE_WORD_LENGTH = 256;
 const int MAX_VARIABLE_LENGTH = 256;
 const int MAX_FUNCTION_BUFFER = 8192;
 
+enum NodeTypes
+{
+    PROGRAMM_ROOT = 0,
+    DECLARATION = 1,
+    FUNCTION = 2,
+    VARLIST = 3,
+    ID = 4,
+    BLOCK = 5,
+    IF = 6
+};
+
 struct Function {
     string_view name;
     string_view *var_list;
@@ -137,6 +148,36 @@ Function *buildFunctionStructs (string_view *functions, size_t n_functions)
   return function_structs;
 }
 
+Tree<string_view*>* buildFunctionsTree(Function* functions, size_t n_functions)
+{
+  Tree<string_view*>* programm_tree = new Tree<string_view*>();
+  programm_tree->root = programm_tree->newNode(nullptr, PROGRAMM_ROOT);
+
+  auto declaration_node = programm_tree->newNode (nullptr, DECLARATION);
+  programm_tree->connectNodeRight (programm_tree->getRoot(), declaration_node);
+
+  for (int i = 0; i < n_functions; i++)
+    {
+      auto function_node = programm_tree->newNode(nullptr, FUNCTION);
+      programm_tree->connectNodeRight(declaration_node, function_node);
+
+      auto function_name = programm_tree->newNode(&functions[i].name, ID);
+      programm_tree->connectNodeRight(function_node, function_name);
+
+      auto block_node = programm_tree->newNode(&functions[i].block, BLOCK);
+      programm_tree->connectNodeRight (function_name, block_node);
+
+      auto varlist_node = programm_tree->newNode (nullptr, VARLIST);
+      programm_tree->connectNodeLeft(function_node, varlist_node);
+      //TODO Connect args
+
+      auto new_declaration_node = programm_tree->newNode (nullptr, DECLARATION);
+      programm_tree->connectNodeLeft (declaration_node, new_declaration_node);
+      declaration_node = new_declaration_node;
+    }
+    return programm_tree;
+}
+
 int main ()
 {
   FILE *input = fopen ("example.mhead", "r");
@@ -152,17 +193,9 @@ int main ()
   string_view *functions = splitToFunctions (data, &number_of_functions);
   Function *function_structs = buildFunctionStructs (functions, number_of_functions);
 
-  std::cout << "Name: " << function_structs[0].name << std::endl;
-  std::cout << "Number of arguments: " << function_structs[0].n_args << std::endl;
-  std::cout << "Args: ";
-  for(int i = 0 ; i < function_structs[0].n_args; i++)
-    {
-      std::cout << function_structs[0].var_list[i] << " ";
-    }
- std::cout << std::endl;
-
-  std::cout << "Body: " << std::endl;
-  std::cout << function_structs[0].block;
+  auto tree = buildFunctionsTree (function_structs, number_of_functions);
+  tree->dump("../dump.dot");
+  system("dot -Tpng ../dump.dot > ../dump.png");
 
   return 0;
 }
