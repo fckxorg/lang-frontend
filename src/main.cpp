@@ -148,6 +148,26 @@ Function *buildFunctionStructs (string_view *functions, size_t n_functions)
   return function_structs;
 }
 
+Node<string_view*>* buildVarlistSubtree(string_view* varlist, size_t n_args)
+{
+
+  auto root_node = new Node<string_view *>(nullptr, 3);
+  Node<string_view*>* current_root_node = root_node;
+  for(int i = 0; i < n_args; i++)
+    {
+      auto id_node = new Node<string_view *>(&varlist[i], 4);
+      auto new_varlist = new Node<string_view *>(nullptr, 3);
+      current_root_node->right = id_node;
+      id_node->parent = current_root_node;
+
+      new_varlist->parent = current_root_node;
+      current_root_node->left = new_varlist;
+
+      current_root_node = new_varlist;
+    }
+  return root_node;
+}
+
 Tree<string_view*>* buildFunctionsTree(Function* functions, size_t n_functions)
 {
   Tree<string_view*>* programm_tree = new Tree<string_view*>();
@@ -167,9 +187,8 @@ Tree<string_view*>* buildFunctionsTree(Function* functions, size_t n_functions)
       auto block_node = programm_tree->newNode(&functions[i].block, BLOCK);
       programm_tree->connectNodeRight (function_name, block_node);
 
-      auto varlist_node = programm_tree->newNode (nullptr, VARLIST);
+      auto varlist_node = buildVarlistSubtree (functions[i].var_list, functions[i].n_args);
       programm_tree->connectNodeLeft(function_node, varlist_node);
-      //TODO Connect args
 
       auto new_declaration_node = programm_tree->newNode (nullptr, DECLARATION);
       programm_tree->connectNodeLeft (declaration_node, new_declaration_node);
