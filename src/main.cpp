@@ -21,15 +21,18 @@ enum NodeTypes {
     WHILE = 7,
     OP = 8,
     EXPRESSION = 9,
-    VAR = 10
+    VAR = 10,
+    RETURN = 11
 };
 
 struct Function {
     string_view name;
     string_view *var_list;
-    string_view block;
+    string_view *block;
     size_t n_args;
 };
+
+Node<string_view *> *parseBlock (string_view *block);
 
 string_view *splitToFunctions (char *source, size_t *number_of_functions)
 {
@@ -127,50 +130,81 @@ string_view *getArgs (char *buffer)
   return args;
 }
 
-string_view getBlock (string_view *function)
+string_view* getBlock (string_view *function)
 {
   size_t block_start = function->find ("join_this_world\n");
   string_view function_body = function->substr (
       block_start + strlen ("join_this_world\n"),
       function->size () - block_start - strlen ("join_this_world") - strlen ("\nend_life"));
-  return function_body;
+
+
+  return new string_view(function_body.data(), function_body.size());
 }
 
-Function *buildFunctionStructs (string_view *functions, size_t n_functions)
+Function *buildFunctionStructs (string_view *functions, size_t
+n_functions)
 {
   Function *function_structs = new Function[n_functions];
-  for (int i = 0; i < n_functions; i++)
+  for (
+      int i = 0;
+      i < n_functions;
+      i++)
     {
       size_t name_length = 0;
-      sscanf (functions[i].data (), "%*s%n", &name_length);
-      function_structs[i].name = string_view (functions[i].data (), name_length);
-      functions[i].remove_prefix (name_length + 1);
+      sscanf (functions[i]
+                  .
+                      data (),
+              "%*s%n", &name_length);
+      function_structs[i].
+          name = string_view (functions[i].data (), name_length);
+      functions[i].
+          remove_prefix (name_length
+                         + 1);
 
-      function_structs[i].var_list = getArgs ((char *) functions[i].data ());
-      function_structs[i].n_args = countArgs ((char *) functions[i].data ());
-      function_structs[i].block = getBlock (&functions[i]);
+      function_structs[i].
+          var_list = getArgs ((char *) functions[i].data ());
+      function_structs[i].
+          n_args = countArgs ((char *) functions[i].data ());
+      function_structs[i].
+          block = getBlock (&functions[i]);
     }
-  return function_structs;
+  return
+      function_structs;
 }
 
-Node<string_view *> *buildVarlistSubtree (string_view *varlist, size_t n_args)
+Node<string_view *> *buildVarlistSubtree (string_view *varlist, size_t
+n_args)
 {
 
   auto root_node = new Node<string_view *> (nullptr, 3);
   Node<string_view *> *current_root_node = root_node;
-  for (int i = 0; i < n_args; i++)
+  for (
+      int i = 0;
+      i < n_args;
+      i++)
     {
       auto id_node = new Node<string_view *> (&varlist[i], 4);
       auto new_varlist = new Node<string_view *> (nullptr, 3);
-      current_root_node->right = id_node;
-      id_node->parent = current_root_node;
+      current_root_node->
+          right = id_node;
+      id_node->
+          parent = current_root_node;
 
-      new_varlist->parent = current_root_node;
-      current_root_node->left = new_varlist;
+      new_varlist->
+          parent = current_root_node;
+      current_root_node->
+          left = new_varlist;
 
       current_root_node = new_varlist;
     }
-  return root_node;
+  return
+      root_node;
+}
+
+Node<string_view *> *getCondition (char *buffer)
+{
+  //TODO condition parsing
+  return new Node<string_view *> (nullptr, 9);
 }
 
 Node<string_view *> *parseVar (char *buffer)
@@ -184,25 +218,83 @@ Node<string_view *> *parseVar (char *buffer)
   if (strcmp (word, "new_blood") == 0)
     {
       buffer += symbols_read + 1;
-      sscanf (buffer, "%s%n", word, &symbols_read);
-      string_view variable_name = string_view (word, symbols_read - 1);
-      return new Node<string_view *> (&variable_name, VAR);
+      sscanf (buffer, "%*s%n", &symbols_read);
+      string_view* variable_name = new string_view (buffer, symbols_read - 1);
+      auto var_name = new Node<string_view *> (variable_name, VAR);
+      return var_name;
     }
   else
     {
       perror ("I'll kill you! You didn't spilled the blood!");
-      exit(1);
+      exit (1);
     }
 }
 
-Node<string_view*>* parseIf(char* buffer)
+
+Node<string_view *> *parseExp (char *buffer)
 {
-  
+  return parseVar(buffer);
+}
+
+Node<string_view *> *parseIf (string_view* block_data)
+{
+  char word[MAX_SINGLE_WORD_LENGTH] = "";
+  size_t symbols_read = 0;
+  char* buffer = (char*)block_data->data();
+
+  while (!isalpha (*buffer)) buffer++;
+  sscanf (buffer, "%s%n", word, &symbols_read);
+
+  if (strcmp (word, "hope_that") == 0)
+    {
+      buffer += symbols_read + 1;
+
+      Node<string_view *> *if_root = new Node<string_view *> (nullptr, IF);
+      if_root->left = getCondition (buffer);
+      if_root->left->parent = if_root;
+
+      if_root->right = parseBlock (getBlock (block_data));
+      if_root->right->parent = if_root;
+
+      return if_root;
+    }
+  else
+    {
+      return parseExp (buffer);
+    }
+}
+
+Node<string_view *> *parseWhile (string_view* block_data)
+{
+  char word[MAX_SINGLE_WORD_LENGTH] = "";
+  size_t symbols_read = 0;
+  char* buffer = (char*)block_data->data();
+
+  while (!isalpha (*buffer)) buffer++;
+  sscanf (buffer, "%s%n", word, &symbols_read);
+
+  if (strcmp (word, "nothing_could_stop_me_but") == 0)
+    {
+      buffer += symbols_read + 1;
+
+      Node<string_view *> *while_root = new Node<string_view *> (nullptr, IF);
+      while_root->left = getCondition (buffer);
+      while_root->left->parent = while_root;
+
+      while_root->right = parseBlock (getBlock (block_data));
+      while_root->right->parent = while_root;
+
+      return while_root;
+    }
+  else
+    {
+      return parseIf(block_data);
+    }
 }
 
 Node<string_view *> *parseBlock (string_view *block)
 {
-
+  return parseWhile(block);
 }
 
 Tree<string_view *> *buildFunctionsTree (Function *functions, size_t n_functions)
@@ -221,7 +313,7 @@ Tree<string_view *> *buildFunctionsTree (Function *functions, size_t n_functions
       auto function_name = programm_tree->newNode (&functions[i].name, ID);
       programm_tree->connectNodeRight (function_node, function_name);
 
-      auto block_node = programm_tree->newNode (&functions[i].block, BLOCK);
+      auto block_node = parseBlock (functions[i].block);
       programm_tree->connectNodeRight (function_name, block_node);
 
       auto varlist_node = buildVarlistSubtree (functions[i].var_list, functions[i].n_args);
