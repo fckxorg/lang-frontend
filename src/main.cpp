@@ -77,10 +77,7 @@ size_t countArgs (char *buffer)
           n_args++;
           while (*buffer != ',' && *buffer != '(' && *buffer != ' ' && *buffer != ')') buffer++;
         }
-      else
-        {
-          buffer++;
-        }
+      else buffer++;
     }
   return n_args;
 }
