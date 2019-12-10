@@ -36,47 +36,34 @@ Node<string_view *> *parseBlock (string_view *block);
 
 string_view *splitToFunctions (char *source, size_t *number_of_functions)
 {
-  char *source_start = source;
+  string_view source_code = string_view (source);
   size_t read_symbols = 0;
   *number_of_functions = 0;
-  char *current_word_buffer = new char[MAX_SINGLE_WORD_LENGTH] ();
+  size_t start_position = 0;
 
-  while (*source)
+  while (source_code.find("slave", start_position) != string_view::npos)
     {
-      sscanf (source, "%s%n", current_word_buffer, &read_symbols);
-      source += read_symbols;
-
-      if (strcmp (current_word_buffer, "slave") == 0)
-        {
           (*number_of_functions)++;
-        }
+          start_position += source_code.find("slave", start_position) + 6;
     }
-
-  source = source_start;
   string_view *functions = new string_view[*number_of_functions] ();
-  char *previous_function_start = source_start;
+
+  size_t function_start = 0;
+  size_t function_end = 0;
   size_t n_extracted_functions = 0;
+  start_position = 0;
 
-  while (*source)
+  while (source_code.find("slave", start_position) != string_view::npos && n_extracted_functions < *number_of_functions - 1)
     {
-      sscanf (source, "%s%n", current_word_buffer, &read_symbols);
-
-      if (strcmp (current_word_buffer, "slave") == 0)
-        {
-          if (previous_function_start != source_start)
-            {
-              functions[n_extracted_functions] = string_view (previous_function_start,
-                                                              source - previous_function_start);
-              n_extracted_functions++;
-            }
-          previous_function_start = source + read_symbols + 1;
-        }
-      source += read_symbols;
+      function_start = source_code.find("slave", start_position) + 6;
+      start_position = function_start;
+      function_end = source_code.find("slave", start_position);
+      functions[n_extracted_functions] = source_code.substr(function_start, function_end-function_start);
+      n_extracted_functions++;
     }
-  if (previous_function_start != source_start && n_extracted_functions < *number_of_functions)
-    {
-      functions[*number_of_functions - 1] = string_view (previous_function_start, source - previous_function_start);
-    }
+  function_start = source_code.find("slave", start_position) + 6;
+  function_end = source_code.size();
+  functions[*number_of_functions - 1] = source_code.substr(function_start, function_end - 1 - function_start);
   return functions;
 }
 
