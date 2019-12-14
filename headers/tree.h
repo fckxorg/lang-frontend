@@ -6,22 +6,31 @@
 
 #include "string_funcs.h"
 
-std::map<int, char *> types = {{0, "PROGRAMM_ROOT"},
-                               {1, "DECLARATION"},
-                               {2, "FUNCTION"},
-                               {3, "VARLIST"},
-                               {4, "ID"},
-                               {5, "BLOCK"},
-                               {6, "IF"},
-                               {7, "WHILE"},
-                               {8, "OP"},
-                               {9, "EXPRESSION"},
-                               {10, "VAR"},
-                               {11, "RETURN"},
-                               {12, "INPUT"},
-                               {13, "OUTPUT"},
-                               {14, "INITIALIZE"},
-                               {15, "ASSIGNMENT"}};
+std::map<int, char *> types = {{0,   "PROGRAMM_ROOT"},
+                               {1,   "DECLARATION"},
+                               {2,   "FUNCTION"},
+                               {3,   "VARLIST"},
+                               {4,   "ID"},
+                               {5,   "BLOCK"},
+                               {6,   "IF"},
+                               {7,   "WHILE"},
+                               {8,   "OP"},
+                               {9,   "EXPRESSION"},
+                               {10,  "VAR"},
+                               {11,  "RETURN"},
+                               {12,  "INPUT"},
+                               {13,  "OUTPUT"},
+                               {14,  "INITIALIZE"},
+                               {15,  "ASSIGNMENT"},
+                               {16,  "NUMBER"},
+                               {17,  "OPERATOR"},
+                               {100, "ADD"},
+                               {101, "SUB"},
+                               {102, "MUL"},
+                               {103, "DIV"},
+                               {104, "SIN"},
+                               {105, "COS"},
+                               {106, "TAN"}};
 
 template<class Node_T>
 class Node {
@@ -68,8 +77,8 @@ class Tree {
 
   void dumpSubTree (Node<T> *node, std::ofstream &dump_file)
   {
-
-    dump_file << "node" << node << "[label=\"{{" << node << "}|{TYPE|" << types[node->type] << "}|{VALUE|" << serialize (*node)
+    dump_file << "node" << node << "[label=\"{{" << node << "}|{TYPE|" << types[node->type] << "}|{VALUE|"
+              << serialize (*node)
               << "}|{LEFT|" << node->left
               << "}|{RIGHT|" << node->right << "}|{PARENT|" << node->parent << "}}}\",shape=record];" << std::endl;
     if (node->parent)

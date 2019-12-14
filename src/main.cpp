@@ -213,6 +213,13 @@ Node<string_view *> *parseExpression (string_view *line, size_t *position)
   *position +=expression_end - id_start;
   while (!isalpha (*((char *) line->data () + *position))) (*position)++;
 
+  char exp_end_symbol = *(line->data() + expression_end);
+  *((char*)line->data() + expression_end) = '\0';
+  TreeBuilder builder;
+  Tree<string_view*>* expression_tree = builder.build ((char*)line->data() + expression_start);
+  subtree_root->right = expression_tree->root;
+  subtree_root->right->parent = subtree_root;
+  *((char*)line->data() + expression_end) = exp_end_symbol;
   return subtree_root;
 
 
