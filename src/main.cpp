@@ -126,7 +126,6 @@ string_view *getBlock (string_view *function)
   string_view *function_body = new string_view ();
   *function_body = function->substr (block_start, block_end - block_start);
 
-  std::cout << *function_body << std::endl;
   return function_body;
 }
 
@@ -283,8 +282,6 @@ int main ()
   size_t file_size = ftell (input);
   rewind (input);
   char *data = new char[file_size + 1];
-
-  std::cout << (size_t) string_view::npos << std::endl;
 
   fread (data, sizeof (char), file_size, input);
   fclose (input);
