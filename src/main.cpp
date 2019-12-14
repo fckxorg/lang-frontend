@@ -24,7 +24,8 @@ enum NodeTypes {
     VAR = 10,
     RETURN = 11,
     INPUT = 12,
-    OUTPUT = 13
+    OUTPUT = 13,
+    INITIALIZE = 14
 };
 
 struct Function {
@@ -34,7 +35,7 @@ struct Function {
     size_t n_args;
 };
 
-Node<string_view *> *parseBlock (string_view *block);
+Node<string_view *> *parseBlock (string_view *block, size_t *start_position);
 
 string_view *splitToFunctions (char *source, size_t *number_of_functions)
 {
@@ -120,6 +121,7 @@ string_view *getArgs (char *buffer)
 string_view *getBlock (string_view *function)
 {
   size_t block_start = function->find ("join_this_world\n") + strlen ("join_this_world");
+  while (!isalpha (*((char *) function->data () + block_start))) block_start++;
   size_t block_end = function->rfind ("end_life");
   string_view *function_body = new string_view ();
   *function_body = function->substr (block_start, block_end - block_start);
@@ -188,17 +190,11 @@ n_args)
       root_node;
 }
 
-Node<string_view *> *getCondition (char *buffer)
+Node<string_view *> *buildSubtreeWithId (const char *command, string_view *line, int type, size_t *position)
 {
-  //TODO condition parsing
-  return new Node<string_view *> (nullptr, 9);
-}
-
-Node<string_view *> *buildSubtreeWithId (const char *command, string_view *line, int type)
-{
-  if (line->find (command) != string_view::npos)
+  if (line->find (command, *position) != string_view::npos)
     {
-      size_t id_start = line->find (command) + strlen (command);
+      size_t id_start = line->find (command, *position) + strlen (command);
       size_t id_end = line->find (";", id_start);
       auto id = new string_view ();
       *id = line->substr (id_start, id_end - id_start);
@@ -207,100 +203,49 @@ Node<string_view *> *buildSubtreeWithId (const char *command, string_view *line,
       subtree_root->right = new Node<string_view *> (id, ID);
 
       subtree_root->right->parent = subtree_root;
+      *position += id_end - line->find(command, *position);
+      while(!isalpha(*((char*)line->data() + *position))) (*position)++;
       return subtree_root;
     }
   else return nullptr;
 }
 
-Node<string_view *> *parseExpression (string_view *line)
+Node<string_view *> *parseExpression (string_view *line, size_t *position)
 {
   return nullptr;
 }
 
-Node<string_view *> *parseLine (string_view *line)
+Node<string_view *> *parseLine (string_view *line, size_t *position)
 {
-  Node<string_view *> *result = buildSubtreeWithId ("i_wish_for_death", line, RETURN);
-  if (result) return result;
+  size_t return_pos = line->find ("i_wish_for_death", *position);
+  size_t init_pos = line->find ("new_blood", *position);
+  size_t input_pos = line->find ("pray_to_God", *position);
+  size_t output_pos = line->find ("God_take", *position);
+  size_t exp_pos = line->find ("=", *position);
 
-  result = buildSubtreeWithId ("new_blood", line, RETURN);
-  if (result) return result;
+  size_t min_value = std::min (std::min (return_pos, init_pos), std::min (std::min (input_pos, output_pos), exp_pos));
 
-  result = buildSubtreeWithId ("pray_to_God", line, RETURN);
-  if (result) return result;
-
-  result = buildSubtreeWithId ("God_take", line, RETURN);
-  if (result) return result;
-
-  return parseExpression (line);
+  if (min_value == return_pos) return buildSubtreeWithId ("i_wish_for_death", line, RETURN, position);
+  if (min_value == init_pos) return buildSubtreeWithId ("new_blood", line, INITIALIZE, position);
+  if (min_value == input_pos) return buildSubtreeWithId ("pray_to_God", line, RETURN, position);
+  if (min_value == output_pos) return buildSubtreeWithId ("God_take", line, RETURN, position);
+  if (min_value == exp_pos) return parseExpression (line, position);
 }
 
-Node<string_view *> *parseIf (string_view *block_data)
+Node<string_view *> *parseBlock (string_view *block, size_t *start_position)
 {
-  char word[MAX_SINGLE_WORD_LENGTH] = "";
-  size_t symbols_read = 0;
-  char *buffer = (char *) block_data->data ();
-
-  while (!isalpha (*buffer)) buffer++;
-  sscanf (buffer, "%s%n", word, &symbols_read);
-
-  if (strcmp (word, "hope_that") == 0)
+  *start_position = 0;
+  Node<string_view *> *root = new Node<string_view *> (nullptr, BLOCK);
+  Node<string_view *> *current = root;
+  while (*start_position < block->size ())
     {
-      buffer += symbols_read + 1;
-
-      Node<string_view *> *if_root = new Node<string_view *> (nullptr, IF);
-      if_root->left = getCondition (buffer);
-      if_root->left->parent = if_root;
-
-      if_root->right = parseBlock (getBlock (block_data));
-      if_root->right->parent = if_root;
-
-      return if_root;
+      current->left = new Node<string_view *> (nullptr, OP);
+      current->right = parseLine (block, start_position);
+      current->left->parent = current;
+      current->right->parent = current;
+      current = current->left;
     }
-  else
-    {//TODO comletely rewrite
-      return parseLine (block_data);
-    }
-}
-
-Node<string_view *> *parseWhile (string_view *block_data)
-{
-  char word[MAX_SINGLE_WORD_LENGTH] = "";
-  size_t symbols_read = 0;
-  char *buffer = (char *) block_data->data ();
-
-  while (!isalpha (*buffer)) buffer++;
-  sscanf (buffer, "%s%n", word, &symbols_read);
-
-  if (strcmp (word, "nothing_could_stop_me_but") == 0)
-    {
-      buffer += symbols_read + 1;
-
-      Node<string_view *> *while_root = new Node<string_view *> (nullptr, IF);
-      while_root->left = getCondition (buffer);
-      while_root->left->parent = while_root;
-
-      while_root->right = parseBlock (getBlock (block_data));
-      while_root->right->parent = while_root;
-
-      return while_root;
-    }
-  else
-    {
-      return parseIf (block_data);
-    }
-}
-
-Node<string_view *> *parseBlock (string_view *block)
-{
-  size_t n_lines = 0;
-  size_t start_position = 0;
-  while (block->find ('\n', start_position) != string_view::npos)
-    {
-      start_position += block->find ('\n', start_position) + 1;
-      n_lines++;
-    }
-  n_lines++;
-  return nullptr;
+  return root;
 }
 
 Tree<string_view *> *buildFunctionsTree (Function *functions, size_t n_functions)
@@ -319,7 +264,8 @@ Tree<string_view *> *buildFunctionsTree (Function *functions, size_t n_functions
       auto function_name = programm_tree->newNode (&functions[i].name, ID);
       programm_tree->connectNodeRight (function_node, function_name);
 
-      auto block_node = parseBlock (functions[i].block);
+      size_t start_position = 0;
+      auto block_node = parseBlock (functions[i].block, &start_position);
       programm_tree->connectNodeRight (function_name, block_node);
 
       auto varlist_node = buildVarlistSubtree (functions[i].var_list, functions[i].n_args);
@@ -339,6 +285,8 @@ int main ()
   size_t file_size = ftell (input);
   rewind (input);
   char *data = new char[file_size + 1];
+
+  std::cout << (size_t) string_view::npos << std::endl;
 
   fread (data, sizeof (char), file_size, input);
   fclose (input);
