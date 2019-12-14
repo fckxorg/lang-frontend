@@ -2,7 +2,10 @@
 #include <iostream>
 #include <string_view>
 #include <cstring>
+
+#include "../headers/config.h"
 #include "../headers/tree.h"
+#include "../headers/TreeBuilder.h"
 
 using std::string_view;
 
@@ -10,23 +13,7 @@ const int MAX_SINGLE_WORD_LENGTH = 256;
 const int MAX_VARIABLE_LENGTH = 256;
 const int MAX_FUNCTION_BUFFER = 8192;
 
-enum NodeTypes {
-    PROGRAMM_ROOT = 0,
-    DECLARATION = 1,
-    FUNCTION = 2,
-    VARLIST = 3,
-    ID = 4,
-    BLOCK = 5,
-    IF = 6,
-    WHILE = 7,
-    OP = 8,
-    EXPRESSION = 9,
-    VAR = 10,
-    RETURN = 11,
-    INPUT = 12,
-    OUTPUT = 13,
-    INITIALIZE = 14
-};
+
 
 struct Function {
     string_view name;
@@ -49,7 +36,7 @@ string_view *splitToFunctions (char *source, size_t *number_of_functions)
       (*number_of_functions)++;
       start_position += source_code.find ("slave", start_position) + 6;
     }
-  string_view *functions = new string_view[*number_of_functions] ();
+  auto *functions = new string_view[*number_of_functions] ();
 
   size_t function_start = 0;
   size_t function_end = 0;
@@ -92,7 +79,7 @@ string_view *getArgs (char *buffer)
 
   if (!n_args) return nullptr;
 
-  string_view *args = new string_view[n_args] ();
+  auto *args = new string_view[n_args] ();
   while (*buffer == ' ' || *buffer == '(') buffer++;
   size_t symbols_read = 0;
   if (n_args == 1)
@@ -123,7 +110,7 @@ string_view *getBlock (string_view *function)
   size_t block_start = function->find ("join_this_world\n") + strlen ("join_this_world");
   while (!isalpha (*((char *) function->data () + block_start))) block_start++;
   size_t block_end = function->rfind ("end_life");
-  string_view *function_body = new string_view ();
+  auto *function_body = new string_view ();
   *function_body = function->substr (block_start, block_end - block_start);
 
   return function_body;
@@ -131,7 +118,7 @@ string_view *getBlock (string_view *function)
 
 Function *buildFunctionStructs (string_view *functions, size_t n_functions)
 {
-  Function *function_structs = new Function[n_functions];
+  auto *function_structs = new Function[n_functions];
   for (
       int i = 0;
       i < n_functions;
@@ -209,7 +196,26 @@ Node<string_view *> *buildSubtreeWithId (const char *command, string_view *line,
 
 Node<string_view *> *parseExpression (string_view *line, size_t *position)
 {
-  return nullptr;
+  size_t expression_start = line->find ("=", *position) + 2;
+  size_t expression_end = line->find(";", *position);
+  size_t id_start = line->rfind (";", *position);
+  while (!isalpha (*((char *) line->data () + id_start))) (id_start)++;
+
+  size_t id_end = line->find("=", *position);
+  while (!isalpha (*((char *) line->data () + id_end))) id_end--;
+
+  auto subtree_root = new Node<string_view *> (nullptr, ASSIGNMENT);
+  subtree_root->left = new Node<string_view*>(nullptr, ID);
+  subtree_root->left->parent = subtree_root;
+  subtree_root->left->data = new string_view();
+  *(subtree_root->left->data) = line->substr(id_start, id_end - id_start + 1);
+
+  *position +=expression_end - id_start;
+  while (!isalpha (*((char *) line->data () + *position))) (*position)++;
+
+  return subtree_root;
+
+
 }
 
 Node<string_view *> *parseLine (string_view *line, size_t *position)
@@ -232,7 +238,7 @@ Node<string_view *> *parseLine (string_view *line, size_t *position)
 Node<string_view *> *parseBlock (string_view *block, size_t *start_position)
 {
   *start_position = 0;
-  Node<string_view *> *root = new Node<string_view *> (nullptr, BLOCK);
+  auto *root = new Node<string_view *> (nullptr, BLOCK);
   Node<string_view *> *current = root;
   while (*start_position < block->size ())
     {
@@ -247,7 +253,7 @@ Node<string_view *> *parseBlock (string_view *block, size_t *start_position)
 
 Tree<string_view *> *buildFunctionsTree (Function *functions, size_t n_functions)
 {
-  Tree<string_view *> *programm_tree = new Tree<string_view *> ();
+  auto *programm_tree = new Tree<string_view *> ();
   programm_tree->root = programm_tree->newNode (nullptr, PROGRAMM_ROOT);
 
   auto declaration_node = programm_tree->newNode (nullptr, DECLARATION);

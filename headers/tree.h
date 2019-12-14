@@ -20,7 +20,8 @@ std::map<int, char *> types = {{0, "PROGRAMM_ROOT"},
                                {11, "RETURN"},
                                {12, "INPUT"},
                                {13, "OUTPUT"},
-                               {14, "INITIALIZE"}};
+                               {14, "INITIALIZE"},
+                               {15, "ASSIGNMENT"}};
 
 template<class Node_T>
 class Node {
