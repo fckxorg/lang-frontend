@@ -130,8 +130,7 @@ string_view *getBlock (string_view *function)
   return function_body;
 }
 
-Function *buildFunctionStructs (string_view *functions, size_t
-n_functions)
+Function *buildFunctionStructs (string_view *functions, size_t n_functions)
 {
   Function *function_structs = new Function[n_functions];
   for (
@@ -161,8 +160,7 @@ n_functions)
       function_structs;
 }
 
-Node<string_view *> *buildVarlistSubtree (string_view *varlist, size_t
-n_args)
+Node<string_view *> *buildVarlistSubtree (string_view *varlist, size_t n_args)
 {
 
   auto root_node = new Node<string_view *> (nullptr, 3);
@@ -203,8 +201,8 @@ Node<string_view *> *buildSubtreeWithId (const char *command, string_view *line,
       subtree_root->right = new Node<string_view *> (id, ID);
 
       subtree_root->right->parent = subtree_root;
-      *position += id_end - line->find(command, *position);
-      while(!isalpha(*((char*)line->data() + *position))) (*position)++;
+      *position += id_end - line->find (command, *position);
+      while (!isalpha (*((char *) line->data () + *position))) (*position)++;
       return subtree_root;
     }
   else return nullptr;
@@ -227,8 +225,8 @@ Node<string_view *> *parseLine (string_view *line, size_t *position)
 
   if (min_value == return_pos) return buildSubtreeWithId ("i_wish_for_death", line, RETURN, position);
   if (min_value == init_pos) return buildSubtreeWithId ("new_blood", line, INITIALIZE, position);
-  if (min_value == input_pos) return buildSubtreeWithId ("pray_to_God", line, RETURN, position);
-  if (min_value == output_pos) return buildSubtreeWithId ("God_take", line, RETURN, position);
+  if (min_value == input_pos) return buildSubtreeWithId ("pray_to_God", line, INPUT, position);
+  if (min_value == output_pos) return buildSubtreeWithId ("God_take", line, OUTPUT, position);
   if (min_value == exp_pos) return parseExpression (line, position);
 }
 
