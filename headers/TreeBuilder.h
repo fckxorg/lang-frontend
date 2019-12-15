@@ -143,11 +143,14 @@ class TreeBuilder {
             for(int i = 0; i < n_args; i++)
               {
                 current->right = new Node<string_view *> (args+i, ID);
-                current->left = new Node<string_view *> (nullptr, VARLIST);
-                current->left->parent = current;
                 current->right->parent = current;
 
-                current = current->left;
+                if(i != n_args - 1)
+                  {
+                    current->left = new Node<string_view *> (nullptr, VARLIST);
+                    current->left->parent = current;
+                    current = current->left;
+                  }
               }
             while(*buffer != ')') buffer++;
             buffer++;
