@@ -96,16 +96,19 @@ class Tree {
     if (node->right) dumpSubTree (node->right, dump_file);
   }
 
-  void writeSubTreeToFile (Node<T> *node, std::ofstream &file, char *(*serialize) (Node<T> *))
+  void writeSubTreeToFile (Node<T> *node, std::ofstream &file)
   {
     file << serialize (node);
-    if (node->left || node->right)
+    if(node)
       {
-        file << "{";
-        writeSubTreeToFile (node->left, file, serialize);
-        file << " ";
-        writeSubTreeToFile (node->right, file, serialize);
-        file << "}";
+        if (node->left || node->right)
+          {
+            file << "{";
+            writeSubTreeToFile (node->left, file);
+            file << " ";
+            writeSubTreeToFile (node->right, file);
+            file << "}";
+          }
       }
   }
 
@@ -232,7 +235,7 @@ class Tree {
     std::ofstream file;
     file.open (filename);
     file << "{";
-    writeSubTreeToFile (root, file, serialize);
+    writeSubTreeToFile (root, file);
     file << "}";
     file.close ();
   }

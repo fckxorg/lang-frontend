@@ -384,7 +384,7 @@ int main ()
   Function *function_structs = buildFunctionStructs (functions, number_of_functions);
 
   auto tree = buildFunctionsTree (function_structs, number_of_functions);
-  //tree->saveToFile ("../sample.ast");
+  tree->saveToFile ("../sample.ast");
   tree->dump ("../dump.dot");
   system ("dot -Tpng ../dump.dot > ../dump.png");
 
