@@ -27,5 +27,7 @@ enum NodeTypes {
     DIV = 103,
     SIN = 104,
     COS = 105,
-    TAN = 106
+    TAN = 106,
+    EQUAL = 200,
+    ABOVE = 201
 };

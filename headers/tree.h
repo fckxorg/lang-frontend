@@ -30,7 +30,9 @@ std::map<int, char *> types = {{0,   "PROGRAMM_ROOT"},
                                {103, "DIV"},
                                {104, "SIN"},
                                {105, "COS"},
-                               {106, "TAN"}};
+                               {106, "TAN"},
+                               {200, "=="},
+                               {201, ">"}};
 
 template<class Node_T>
 class Node {

@@ -13,8 +13,6 @@ const int MAX_SINGLE_WORD_LENGTH = 256;
 const int MAX_VARIABLE_LENGTH = 256;
 const int MAX_FUNCTION_BUFFER = 8192;
 
-
-
 struct Function {
     string_view name;
     string_view *var_list;
@@ -194,35 +192,74 @@ Node<string_view *> *buildSubtreeWithId (const char *command, string_view *line,
   else return nullptr;
 }
 
+Node<string_view *>* extractExpression(string_view* line, size_t expression_start, size_t expression_end)
+{
+  char exp_end_symbol = *(line->data () + expression_end);
+  *((char *) line->data () + expression_end) = '\0';
+
+  TreeBuilder builder;
+  Tree<string_view *> *expression_tree = builder.build ((char *) line->data () + expression_start);
+  *((char *) line->data () + expression_end) = exp_end_symbol;
+
+  return expression_tree->root;
+}
+
 Node<string_view *> *parseExpression (string_view *line, size_t *position)
 {
   size_t expression_start = line->find ("=", *position) + 2;
-  size_t expression_end = line->find(";", *position);
+  size_t expression_end = line->find (";", *position);
   size_t id_start = line->rfind (";", *position);
   while (!isalpha (*((char *) line->data () + id_start))) (id_start)++;
 
-  size_t id_end = line->find("=", *position);
+  size_t id_end = line->find ("=", *position);
   while (!isalpha (*((char *) line->data () + id_end))) id_end--;
 
   auto subtree_root = new Node<string_view *> (nullptr, ASSIGNMENT);
-  subtree_root->left = new Node<string_view*>(nullptr, ID);
+  subtree_root->left = new Node<string_view *> (nullptr, ID);
   subtree_root->left->parent = subtree_root;
-  subtree_root->left->data = new string_view();
-  *(subtree_root->left->data) = line->substr(id_start, id_end - id_start + 1);
+  subtree_root->left->data = new string_view ();
+  *(subtree_root->left->data) = line->substr (id_start, id_end - id_start + 1);
 
-  *position +=expression_end - id_start;
+  *position += expression_end - id_start;
   while (!isalpha (*((char *) line->data () + *position))) (*position)++;
 
-  char exp_end_symbol = *(line->data() + expression_end);
-  *((char*)line->data() + expression_end) = '\0';
-  TreeBuilder builder;
-  Tree<string_view*>* expression_tree = builder.build ((char*)line->data() + expression_start);
-  subtree_root->right = expression_tree->root;
+  subtree_root->right = extractExpression (line, expression_start, expression_end);
   subtree_root->right->parent = subtree_root;
-  *((char*)line->data() + expression_end) = exp_end_symbol;
   return subtree_root;
 
+}
 
+Node<string_view *> *parseBlockInstruction (string_view *line, size_t *position, bool cycle)
+{
+  size_t start = 0;
+  auto subtree_root = new Node<string_view *> (nullptr, 0);
+  if (cycle) subtree_root->type = WHILE;
+  else subtree_root->type = IF;
+
+  size_t condition_start = line->find("(", *position) + 1;
+  size_t condition_end = line->find(")", *position);
+
+  size_t equal_pos = line->find("==", *position);
+  size_t above_pos = line->find(">", *position);
+
+
+  size_t min_pos = std::min(equal_pos, above_pos);
+
+  if(min_pos == equal_pos) subtree_root->left = new Node<string_view*>(nullptr, EQUAL);
+  if(min_pos == above_pos) subtree_root->left = new Node<string_view *> (nullptr, ABOVE);
+
+  subtree_root->left->parent = subtree_root;
+
+  subtree_root->left->left = extractExpression (line, condition_start, min_pos - 1);
+  subtree_root->left->left->parent = subtree_root->left;
+
+  subtree_root->left->right = extractExpression (line, min_pos + 3, condition_end);
+  subtree_root->left->right->parent = subtree_root->left;
+
+  *position = condition_end + 1;
+  while(!isalpha(*(line->data() + *position))) (*position)++;
+
+  return subtree_root;
 }
 
 Node<string_view *> *parseLine (string_view *line, size_t *position)
@@ -232,19 +269,23 @@ Node<string_view *> *parseLine (string_view *line, size_t *position)
   size_t input_pos = line->find ("pray_to_God", *position);
   size_t output_pos = line->find ("God_take", *position);
   size_t exp_pos = line->find ("=", *position);
+  size_t if_pos = line->find ("hope_that", *position);
+  size_t while_pos = line->find ("nothing_could_stop_me_but", *position);
 
-  size_t min_value = std::min (std::min (return_pos, init_pos), std::min (std::min (input_pos, output_pos), exp_pos));
+  size_t min_value = std::min (std::min (while_pos, std::min (return_pos, init_pos)), std::min (std::min (input_pos, output_pos), std::min (exp_pos, if_pos)));
 
   if (min_value == return_pos) return buildSubtreeWithId ("i_wish_for_death", line, RETURN, position);
   if (min_value == init_pos) return buildSubtreeWithId ("new_blood", line, INITIALIZE, position);
   if (min_value == input_pos) return buildSubtreeWithId ("pray_to_God", line, INPUT, position);
   if (min_value == output_pos) return buildSubtreeWithId ("God_take", line, OUTPUT, position);
   if (min_value == exp_pos) return parseExpression (line, position);
+
+  if (min_value == if_pos) return parseBlockInstruction (line, position, false);
+  if (min_value == while_pos) return parseBlockInstruction (line, position, true);
 }
 
 Node<string_view *> *parseBlock (string_view *block, size_t *start_position)
 {
-  *start_position = 0;
   auto *root = new Node<string_view *> (nullptr, BLOCK);
   Node<string_view *> *current = root;
   while (*start_position < block->size ())
