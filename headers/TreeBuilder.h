@@ -120,6 +120,13 @@ class TreeBuilder {
         new_node->right = GetParenthesis ();
         new_node->right->parent = new_node;
       }
+    else if (strcmp (function_name, "sqr") == 0)
+      {
+        new_node = new Node<string_view *> (new string_view(buffer, 3), SQR);
+        buffer += 3;
+        new_node->right = GetParenthesis ();
+        new_node->right->parent = new_node;
+      }
     else {
         char call_buffer[MAX_SINGLE_WORD_LENGTH] = "";
         size_t read_symbols = 0;

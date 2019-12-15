@@ -262,16 +262,26 @@ Node<string_view *> *parseBlockInstruction (string_view *line, size_t *position,
   size_t above_pos = line->find (">", *position);
 
   size_t min_pos = std::min (equal_pos, above_pos);
+  size_t move = 0;
 
-  if (min_pos == equal_pos) subtree_root->left = new Node<string_view *> (nullptr, EQUAL);
-  if (min_pos == above_pos) subtree_root->left = new Node<string_view *> (nullptr, ABOVE);
+  if (min_pos == equal_pos)
+    {
+      subtree_root->left = new Node<string_view *> (nullptr, EQUAL);
+      move = 3;
+    }
+
+  if (min_pos == above_pos)
+    {
+      subtree_root->left = new Node<string_view *> (nullptr, ABOVE);
+      move = 2;
+    }
 
   subtree_root->left->parent = subtree_root;
 
   subtree_root->left->left = extractExpression (line, condition_start, min_pos - 1);
   subtree_root->left->left->parent = subtree_root->left;
 
-  subtree_root->left->right = extractExpression (line, min_pos + 3, condition_end);
+  subtree_root->left->right = extractExpression (line, min_pos + move, condition_end);
   subtree_root->left->right->parent = subtree_root->left;
 
   *position = condition_end + 1;
@@ -284,10 +294,10 @@ Node<string_view *> *parseBlockInstruction (string_view *line, size_t *position,
     }
   else
     {
-      subtree_root->right = new Node<string_view*>(nullptr, C);
+      subtree_root->right = new Node<string_view *> (nullptr, C);
       subtree_root->right->parent = subtree_root;
 
-      subtree_root->right->right = parseBlock(line, position);
+      subtree_root->right->right = parseBlock (line, position);
       subtree_root->right->right->parent = subtree_root->right;
     }
 

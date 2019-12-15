@@ -34,6 +34,7 @@ enum NodeTypes {
     SIN = 104,
     COS = 105,
     TAN = 106,
+    SQR = 107,
     EQUAL = 200,
     ABOVE = 201
 };
