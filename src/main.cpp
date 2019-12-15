@@ -189,7 +189,7 @@ Node<string_view *> *buildSubtreeWithId (const char *command, string_view *line,
   else return nullptr;
 }
 
-Node<string_view *>* extractExpression(string_view* line, size_t expression_start, size_t expression_end)
+Node<string_view *> *extractExpression (string_view *line, size_t expression_start, size_t expression_end)
 {
   char exp_end_symbol = *(line->data () + expression_end);
   *((char *) line->data () + expression_end) = '\0';
@@ -230,13 +230,13 @@ Node<string_view *> *parseBlock (string_view *block, size_t *position)
   auto *root = new Node<string_view *> (nullptr, BLOCK);
   Node<string_view *> *current = root;
 
-  *position = block->find("join_this_world", *position) + strlen("join_this_world");
+  *position = block->find ("join_this_world", *position) + strlen ("join_this_world");
   while (!isalpha (*((char *) block->data () + *position))) (*position)++;
 
   while (true)
     {
       current->right = parseLine (block, position);
-      if(current->right)
+      if (current->right)
         {
           current->left = new Node<string_view *> (nullptr, OP);
           current->left->parent = current;
@@ -245,6 +245,8 @@ Node<string_view *> *parseBlock (string_view *block, size_t *position)
         }
       else
         {
+          current->parent->left = nullptr;
+          delete current;
           return root;
         }
     }
@@ -257,17 +259,16 @@ Node<string_view *> *parseBlockInstruction (string_view *line, size_t *position,
   if (cycle) subtree_root->type = WHILE;
   else subtree_root->type = IF;
 
-  size_t condition_start = line->find("(", *position) + 1;
-  size_t condition_end = line->find(")", *position);
+  size_t condition_start = line->find ("(", *position) + 1;
+  size_t condition_end = line->find (")", *position);
 
-  size_t equal_pos = line->find("==", *position);
-  size_t above_pos = line->find(">", *position);
+  size_t equal_pos = line->find ("==", *position);
+  size_t above_pos = line->find (">", *position);
 
+  size_t min_pos = std::min (equal_pos, above_pos);
 
-  size_t min_pos = std::min(equal_pos, above_pos);
-
-  if(min_pos == equal_pos) subtree_root->left = new Node<string_view*>(nullptr, EQUAL);
-  if(min_pos == above_pos) subtree_root->left = new Node<string_view *> (nullptr, ABOVE);
+  if (min_pos == equal_pos) subtree_root->left = new Node<string_view *> (nullptr, EQUAL);
+  if (min_pos == above_pos) subtree_root->left = new Node<string_view *> (nullptr, ABOVE);
 
   subtree_root->left->parent = subtree_root;
 
@@ -278,11 +279,10 @@ Node<string_view *> *parseBlockInstruction (string_view *line, size_t *position,
   subtree_root->left->right->parent = subtree_root->left;
 
   *position = condition_end + 1;
-  while(!isalpha(*(line->data() + *position))) (*position)++;
+  while (!isalpha (*(line->data () + *position))) (*position)++;
 
-  subtree_root->right = parseBlock(line, position);
+  subtree_root->right = parseBlock (line, position);
   subtree_root->right->parent = subtree_root;
-
 
   return subtree_root;
 }
@@ -296,9 +296,9 @@ Node<string_view *> *parseLine (string_view *line, size_t *position)
   size_t exp_pos = line->find ("=", *position);
   size_t if_pos = line->find ("hope_that", *position);
   size_t while_pos = line->find ("nothing_could_stop_me_but", *position);
-  size_t block_end = line->find("end_life", *position);
+  size_t block_end = line->find ("end_life", *position);
 
-  size_t min_value = std::min (std::min (std::min(while_pos, block_end), std::min (return_pos, init_pos)), std::min (std::min (input_pos, output_pos), std::min (exp_pos, if_pos)));
+  size_t min_value = std::min (std::min (std::min (while_pos, block_end), std::min (return_pos, init_pos)), std::min (std::min (input_pos, output_pos), std::min (exp_pos, if_pos)));
 
   if (min_value == return_pos) return buildSubtreeWithId ("i_wish_for_death", line, RETURN, position);
   if (min_value == init_pos) return buildSubtreeWithId ("new_blood", line, INITIALIZE, position);
@@ -308,24 +308,24 @@ Node<string_view *> *parseLine (string_view *line, size_t *position)
 
   if (min_value == if_pos) return parseBlockInstruction (line, position, false);
   if (min_value == while_pos) return parseBlockInstruction (line, position, true);
-  if(min_value == block_end)
+  if (min_value == block_end)
     {
-      *position = block_end + strlen("end_life");
-      while(!isalpha(*(line->data() + *position))) (*position)++;
+      *position = block_end + strlen ("end_life");
+      while (!isalpha (*(line->data () + *position))) (*position)++;
       return nullptr;
     }
 }
 
-Node<string_view *>* parseFunctionBody(string_view* body)
+Node<string_view *> *parseFunctionBody (string_view *body)
 {
   size_t position = 0;
   auto *root = new Node<string_view *> (nullptr, BLOCK);
   Node<string_view *> *current = root;
 
-  while(position < body->size())
+  while (position < body->size ())
     {
       current->right = parseLine (body, &position);
-      if(current->right)
+      if (current->right)
         {
           current->left = new Node<string_view *> (nullptr, OP);
           current->left->parent = current;
@@ -333,6 +333,8 @@ Node<string_view *>* parseFunctionBody(string_view* body)
           current = current->left;
         }
     }
+  current->parent->left = nullptr;
+  delete current;
   return root;
 }
 
@@ -355,7 +357,7 @@ Tree<string_view *> *buildFunctionsTree (Function *functions, size_t n_functions
       auto varlist_node = buildVarlistSubtree (functions[i].var_list, functions[i].n_args);
       programm_tree->connectNodeLeft (function_node, varlist_node);
 
-      if(i != n_functions - 1)
+      if (i != n_functions - 1)
         {
           auto new_declaration_node = programm_tree->newNode (nullptr, DECLARATION);
           programm_tree->connectNodeLeft (declaration_node, new_declaration_node);
