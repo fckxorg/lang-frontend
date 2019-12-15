@@ -355,9 +355,12 @@ Tree<string_view *> *buildFunctionsTree (Function *functions, size_t n_functions
       auto varlist_node = buildVarlistSubtree (functions[i].var_list, functions[i].n_args);
       programm_tree->connectNodeLeft (function_node, varlist_node);
 
-      auto new_declaration_node = programm_tree->newNode (nullptr, DECLARATION);
-      programm_tree->connectNodeLeft (declaration_node, new_declaration_node);
-      declaration_node = new_declaration_node;
+      if(i != n_functions - 1)
+        {
+          auto new_declaration_node = programm_tree->newNode (nullptr, DECLARATION);
+          programm_tree->connectNodeLeft (declaration_node, new_declaration_node);
+          declaration_node = new_declaration_node;
+        }
 
       size_t start_position = 0;
       auto block_node = parseFunctionBody (functions[i].block);
