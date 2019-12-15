@@ -21,6 +21,7 @@ struct Function {
 };
 
 Node<string_view *> *parseBlock (string_view *block, size_t *start_position);
+Node<string_view *> *parseLine (string_view *line, size_t *position);
 
 string_view *splitToFunctions (char *source, size_t *number_of_functions)
 {
@@ -208,11 +209,10 @@ Node<string_view *> *parseExpression (string_view *line, size_t *position)
 {
   size_t expression_start = line->find ("=", *position) + 2;
   size_t expression_end = line->find (";", *position);
-  size_t id_start = line->rfind (";", *position);
-  while (!isalpha (*((char *) line->data () + id_start))) (id_start)++;
-
   size_t id_end = line->find ("=", *position);
   while (!isalpha (*((char *) line->data () + id_end))) id_end--;
+  size_t id_start = id_end;
+  while (isalpha (*((char *) line->data () + id_start - 1))) id_start--;
 
   auto subtree_root = new Node<string_view *> (nullptr, ASSIGNMENT);
   subtree_root->left = new Node<string_view *> (nullptr, ID);
@@ -227,6 +227,31 @@ Node<string_view *> *parseExpression (string_view *line, size_t *position)
   subtree_root->right->parent = subtree_root;
   return subtree_root;
 
+}
+
+Node<string_view *> *parseBlock (string_view *block, size_t *position)
+{
+  auto *root = new Node<string_view *> (nullptr, BLOCK);
+  Node<string_view *> *current = root;
+
+  *position = block->find("join_this_world", *position) + strlen("join_this_world");
+  while (!isalpha (*((char *) block->data () + *position))) (*position)++;
+
+  while (true)
+    {
+      current->right = parseLine (block, position);
+      if(current->right)
+        {
+          current->left = new Node<string_view *> (nullptr, OP);
+          current->left->parent = current;
+          current->right->parent = current;
+          current = current->left;
+        }
+      else
+        {
+          return root;
+        }
+    }
 }
 
 Node<string_view *> *parseBlockInstruction (string_view *line, size_t *position, bool cycle)
@@ -259,6 +284,10 @@ Node<string_view *> *parseBlockInstruction (string_view *line, size_t *position,
   *position = condition_end + 1;
   while(!isalpha(*(line->data() + *position))) (*position)++;
 
+  subtree_root->right = parseBlock(line, position);
+  subtree_root->right->parent = subtree_root;
+
+
   return subtree_root;
 }
 
@@ -271,8 +300,9 @@ Node<string_view *> *parseLine (string_view *line, size_t *position)
   size_t exp_pos = line->find ("=", *position);
   size_t if_pos = line->find ("hope_that", *position);
   size_t while_pos = line->find ("nothing_could_stop_me_but", *position);
+  size_t block_end = line->find("end_life", *position);
 
-  size_t min_value = std::min (std::min (while_pos, std::min (return_pos, init_pos)), std::min (std::min (input_pos, output_pos), std::min (exp_pos, if_pos)));
+  size_t min_value = std::min (std::min (std::min(while_pos, block_end), std::min (return_pos, init_pos)), std::min (std::min (input_pos, output_pos), std::min (exp_pos, if_pos)));
 
   if (min_value == return_pos) return buildSubtreeWithId ("i_wish_for_death", line, RETURN, position);
   if (min_value == init_pos) return buildSubtreeWithId ("new_blood", line, INITIALIZE, position);
@@ -282,19 +312,30 @@ Node<string_view *> *parseLine (string_view *line, size_t *position)
 
   if (min_value == if_pos) return parseBlockInstruction (line, position, false);
   if (min_value == while_pos) return parseBlockInstruction (line, position, true);
+  if(min_value == block_end)
+    {
+      *position = block_end + strlen("end_life");
+      while(!isalpha(*(line->data() + *position))) (*position)++;
+      return nullptr;
+    }
 }
 
-Node<string_view *> *parseBlock (string_view *block, size_t *start_position)
+Node<string_view *>* parseFunctionBody(string_view* body)
 {
+  size_t position = 0;
   auto *root = new Node<string_view *> (nullptr, BLOCK);
   Node<string_view *> *current = root;
-  while (*start_position < block->size ())
+
+  while(position < body->size())
     {
-      current->left = new Node<string_view *> (nullptr, OP);
-      current->right = parseLine (block, start_position);
-      current->left->parent = current;
-      current->right->parent = current;
-      current = current->left;
+      current->right = parseLine (body, &position);
+      if(current->right)
+        {
+          current->left = new Node<string_view *> (nullptr, OP);
+          current->left->parent = current;
+          current->right->parent = current;
+          current = current->left;
+        }
     }
   return root;
 }
@@ -323,7 +364,7 @@ Tree<string_view *> *buildFunctionsTree (Function *functions, size_t n_functions
       declaration_node = new_declaration_node;
 
       size_t start_position = 0;
-      auto block_node = parseBlock (functions[i].block, &start_position);
+      auto block_node = parseFunctionBody (functions[i].block);
       programm_tree->connectNodeRight (function_name, block_node);
 
     }
