@@ -56,8 +56,12 @@ class Node {
 
 std::string_view serialize (Node<std::string_view *>* node)
 {
-  if (node->data) return *(node->data);
-  return std::string_view ("null");
+  if(node)
+    {
+      if (node->data) return *(node->data);
+      return std::string_view (types[node->type]);
+    }
+  return std::string_view("@");
 }
 
 char *parseArg (char *buffer, char **container)
