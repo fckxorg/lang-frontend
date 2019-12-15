@@ -54,9 +54,9 @@ class Node {
   }
 };
 
-std::string_view serialize (Node<std::string_view *> node)
+std::string_view serialize (Node<std::string_view *>* node)
 {
-  if (node.data && node.type != 5) return *(node.data);
+  if (node->data) return *(node->data);
   return std::string_view ("null");
 }
 
@@ -81,7 +81,7 @@ class Tree {
   void dumpSubTree (Node<T> *node, std::ofstream &dump_file)
   {
     dump_file << "node" << node << "[label=\"{{" << node << "}|{TYPE|" << types[node->type] << "}|{VALUE|"
-              << serialize (*node)
+              << serialize (node)
               << "}|{LEFT|" << node->left
               << "}|{RIGHT|" << node->right << "}|{PARENT|" << node->parent << "}}}\",shape=record];" << std::endl;
     if (node->parent)
