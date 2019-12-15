@@ -146,24 +146,20 @@ Node<string_view *> *buildVarlistSubtree (string_view *varlist, size_t n_args)
 
   auto root_node = new Node<string_view *> (nullptr, 3);
   Node<string_view *> *current_root_node = root_node;
-  for (
-      int i = 0;
-      i < n_args;
-      i++)
+  for (int i = 0;i < n_args;i++)
     {
       auto id_node = new Node<string_view *> (&varlist[i], 4);
-      auto new_varlist = new Node<string_view *> (nullptr, 3);
-      current_root_node->
-          right = id_node;
-      id_node->
-          parent = current_root_node;
+      current_root_node->right = id_node;
+      id_node->parent = current_root_node;
 
-      new_varlist->
-          parent = current_root_node;
-      current_root_node->
-          left = new_varlist;
+      if(i != n_args - 1)
+        {
+          auto new_varlist = new Node<string_view *> (nullptr, 3);
+          new_varlist->parent = current_root_node;
+          current_root_node->left = new_varlist;
 
-      current_root_node = new_varlist;
+          current_root_node = new_varlist;
+        }
     }
   return
       root_node;
