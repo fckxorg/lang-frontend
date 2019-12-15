@@ -103,7 +103,7 @@ string_view *getArgs (char *buffer)
   return args;
 }
 
-string_view *getBlock (string_view *function)
+string_view *getFunctionBody (string_view *function)
 {
   size_t block_start = function->find ("join_this_world\n") + strlen ("join_this_world");
   while (!isalpha (*((char *) function->data () + block_start))) block_start++;
@@ -138,7 +138,7 @@ Function *buildFunctionStructs (string_view *functions, size_t n_functions)
       function_structs[i].
           n_args = countArgs ((char *) functions[i].data ());
       function_structs[i].
-          block = getBlock (&functions[i]);
+          block = getFunctionBody (&functions[i]);
     }
   return
       function_structs;
@@ -315,16 +315,17 @@ Tree<string_view *> *buildFunctionsTree (Function *functions, size_t n_functions
       auto function_name = programm_tree->newNode (&functions[i].name, ID);
       programm_tree->connectNodeRight (function_node, function_name);
 
-      size_t start_position = 0;
-      auto block_node = parseBlock (functions[i].block, &start_position);
-      programm_tree->connectNodeRight (function_name, block_node);
-
       auto varlist_node = buildVarlistSubtree (functions[i].var_list, functions[i].n_args);
       programm_tree->connectNodeLeft (function_node, varlist_node);
 
       auto new_declaration_node = programm_tree->newNode (nullptr, DECLARATION);
       programm_tree->connectNodeLeft (declaration_node, new_declaration_node);
       declaration_node = new_declaration_node;
+
+      size_t start_position = 0;
+      auto block_node = parseBlock (functions[i].block, &start_position);
+      programm_tree->connectNodeRight (function_name, block_node);
+
     }
   return programm_tree;
 }
