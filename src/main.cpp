@@ -9,10 +9,6 @@
 
 using std::string_view;
 
-const int MAX_SINGLE_WORD_LENGTH = 256;
-const int MAX_VARIABLE_LENGTH = 256;
-const int MAX_FUNCTION_BUFFER = 8192;
-
 struct Function {
     string_view name;
     string_view *var_list;
