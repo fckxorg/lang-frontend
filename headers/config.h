@@ -26,6 +26,7 @@ enum NodeTypes {
     NUMBER = 16,
     OPERATOR = 17,
     CALL = 18,
+    C = 19,
     ADD = 100,
     SUB = 101,
     MUL = 102,

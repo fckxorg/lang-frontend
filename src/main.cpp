@@ -146,13 +146,13 @@ Node<string_view *> *buildVarlistSubtree (string_view *varlist, size_t n_args)
 
   auto root_node = new Node<string_view *> (nullptr, 3);
   Node<string_view *> *current_root_node = root_node;
-  for (int i = 0;i < n_args;i++)
+  for (int i = 0; i < n_args; i++)
     {
       auto id_node = new Node<string_view *> (&varlist[i], 4);
       current_root_node->right = id_node;
       id_node->parent = current_root_node;
 
-      if(i != n_args - 1)
+      if (i != n_args - 1)
         {
           auto new_varlist = new Node<string_view *> (nullptr, 3);
           new_varlist->parent = current_root_node;
@@ -277,8 +277,19 @@ Node<string_view *> *parseBlockInstruction (string_view *line, size_t *position,
   *position = condition_end + 1;
   while (!isalpha (*(line->data () + *position))) (*position)++;
 
-  subtree_root->right = parseBlock (line, position);
-  subtree_root->right->parent = subtree_root;
+  if (cycle)
+    {
+      subtree_root->right = parseBlock (line, position);
+      subtree_root->right->parent = subtree_root;
+    }
+  else
+    {
+      subtree_root->right = new Node<string_view*>(nullptr, C);
+      subtree_root->right->parent = subtree_root;
+
+      subtree_root->right->right = parseBlock(line, position);
+      subtree_root->right->right->parent = subtree_root->right;
+    }
 
   return subtree_root;
 }
