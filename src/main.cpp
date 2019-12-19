@@ -409,6 +409,7 @@ int main ()
 
   Tree<string_view *>  loadedTree;
   loadedTree.loadFromFile ("../sample.ast");
+  loadedTree.fixTypes (loadedTree.getRoot ());
   loadedTree.dump("../loaded.dot");
   //system ("dot -Tpng ../dump.dot > ../dump.png");
 

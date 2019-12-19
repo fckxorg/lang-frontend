@@ -257,11 +257,38 @@ class Tree {
     return 1 + n_left_subtree + n_right_subtree;
   }
 
-  bool verificateTree ()
+  void fixTypes(Node<std::string_view*>* subtree_root)
   {
-    if (countNodes (root) == n_nodes) return true;
-    return false;
+    if(subtree_root)
+      {
+        if (*(subtree_root->data) == "PROGRAM_ROOT") subtree_root->type = PROGRAM_ROOT;
+        else if (*(subtree_root->data) == "DECLARATION") subtree_root->type = DECLARATION;
+        else if (*(subtree_root->data) == "FUNCTION") subtree_root->type = FUNCTION;
+        else if (*(subtree_root->data) == "VARLIST") subtree_root->type = VARLIST;
+        else if (*(subtree_root->data) == "BLOCK") subtree_root->type = BLOCK;
+        else if (*(subtree_root->data) == "OP") subtree_root->type = OP;
+        else if (*(subtree_root->data) == "INITIALIZE") subtree_root->type = INITIALIZE;
+        else if (*(subtree_root->data) == "IF") subtree_root->type = IF;
+        else if (*(subtree_root->data) == "ABOVE") subtree_root->type = ABOVE;
+        else if (*(subtree_root->data) == "EQUAL") subtree_root->type = EQUAL;
+        else if (*(subtree_root->data) == "C") subtree_root->type = C;
+        else if (*(subtree_root->data) == "WHILE") subtree_root->type = WHILE;
+        else if (*(subtree_root->data) == "RETURN") subtree_root->type = RETURN;
+        else if (*(subtree_root->data) == "ASSIGNMENT") subtree_root->type = ASSIGNMENT;
+        else if (*(subtree_root->data) == "MUL") subtree_root->type = MUL;
+        else if (*(subtree_root->data) == "DIV") subtree_root->type = DIV;
+        else if (*(subtree_root->data) == "ADD") subtree_root->type = ADD;
+        else if (*(subtree_root->data) == "SUB") subtree_root->type = SUB;
+        else if (*(subtree_root->data) == "CALL") subtree_root->type = CALL;
+        else if (*(subtree_root->data) == "SQR") subtree_root->type = SQR;
+        else if (*(subtree_root->data) == "INPUT") subtree_root->type = INPUT;
+        else if (*(subtree_root->data) == "OUTPUT") subtree_root->type = OUTPUT;
+        else if (isdigit ((*(subtree_root->data))[0])) subtree_root->type = NUMBER;
+        else subtree_root->type = ID;
 
+        if(subtree_root->left) fixTypes (subtree_root->left);
+        if(subtree_root->right) fixTypes (subtree_root->right);
+      }
   }
 
 };
