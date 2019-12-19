@@ -122,7 +122,7 @@ class TreeBuilder {
       }
     else if (strcmp (function_name, "sqr") == 0)
       {
-        new_node = new Node<string_view *> (new string_view(buffer, 3), SQR);
+        new_node = new Node<string_view *> (nullptr, SQR);
         buffer += 3;
         new_node->right = GetParenthesis ();
         new_node->right->parent = new_node;
@@ -199,8 +199,8 @@ class TreeBuilder {
 
         Node<string_view *> *right_subtree = GetParenthesis ();
 
-        if (*op == '*') new_root = new Node<string_view *> (new string_view (op, 1), MUL);
-        else new_root = new Node<string_view *> (new string_view (op, 1), DIV);
+        if (*op == '*') new_root = new Node<string_view *> (nullptr, MUL);
+        else new_root = new Node<string_view *> (nullptr, DIV);
 
         new_root->left = left_subtree;
         left_subtree->parent = new_root;
@@ -225,8 +225,8 @@ class TreeBuilder {
         while (*buffer == ' ') buffer++;
         Node<string_view *> *right_subtree = GetMulDiv ();
 
-        if (*op == '+') new_root = new Node<string_view *> (new string_view (op, 1), ADD);
-        else new_root = new Node<string_view *> (new string_view (op, 1), SUB);
+        if (*op == '+') new_root = new Node<string_view *> (nullptr, ADD);
+        else new_root = new Node<string_view *> (nullptr, SUB);
 
         new_root->left = left_subtree;
         left_subtree->parent = new_root;

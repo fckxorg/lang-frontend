@@ -358,7 +358,7 @@ Node<string_view *> *parseFunctionBody (string_view *body)
 Tree<string_view *> *buildFunctionsTree (Function *functions, size_t n_functions)
 {
   auto *programm_tree = new Tree<string_view *> ();
-  programm_tree->root = programm_tree->newNode (nullptr, PROGRAMM_ROOT);
+  programm_tree->root = programm_tree->newNode (nullptr, PROGRAM_ROOT);
 
   auto declaration_node = programm_tree->newNode (nullptr, DECLARATION);
   programm_tree->connectNodeRight (programm_tree->getRoot (), declaration_node);
@@ -391,7 +391,7 @@ Tree<string_view *> *buildFunctionsTree (Function *functions, size_t n_functions
 
 int main ()
 {
-  FILE *input = fopen ("example.mhead", "r");
+  /*FILE *input = fopen ("example.mhead", "r");
   fseek (input, 0, SEEK_END);
   size_t file_size = ftell (input);
   rewind (input);
@@ -405,9 +405,12 @@ int main ()
   Function *function_structs = buildFunctionStructs (functions, number_of_functions);
 
   auto tree = buildFunctionsTree (function_structs, number_of_functions);
-  tree->saveToFile ("../sample.ast");
-  tree->dump ("../dump.dot");
-  system ("dot -Tpng ../dump.dot > ../dump.png");
+  tree->saveToFile ("../sample.ast");*/
+
+  Tree<string_view *>  loadedTree;
+  loadedTree.loadFromFile ("../sample.ast");
+  loadedTree.dump("../loaded.dot");
+  //system ("dot -Tpng ../dump.dot > ../dump.png");
 
   return 0;
 }

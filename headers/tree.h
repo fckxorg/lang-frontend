@@ -6,7 +6,7 @@
 
 #include "string_funcs.h"
 
-std::map<int, char *> types = {{0,   "PROGRAMM_ROOT"},
+std::map<int, char *> types = {{0,   "PROGRAM_ROOT"},
                                {1,   "DECLARATION"},
                                {2,   "FUNCTION"},
                                {3,   "VARLIST"},
@@ -24,8 +24,8 @@ std::map<int, char *> types = {{0,   "PROGRAMM_ROOT"},
                                {15,  "ASSIGNMENT"},
                                {16,  "NUMBER"},
                                {17,  "OPERATOR"},
-                               {18, "CALL"},
-                               {19, "C"},
+                               {18,  "CALL"},
+                               {19,  "C"},
                                {100, "ADD"},
                                {101, "SUB"},
                                {102, "MUL"},
@@ -56,33 +56,71 @@ class Node {
   }
 };
 
-std::string_view serialize (Node<std::string_view *>* node)
+std::string_view serialize (Node<std::string_view *> *node)
 {
-  if(node)
+  if (node)
     {
       if (node->data) return *(node->data);
       return std::string_view (types[node->type]);
     }
-  return std::string_view("@");
+  return std::string_view ("@");
 }
 
-char *parseArg (char *buffer, char **container)
+void skipSpaces (char **buffer)
 {
-  size_t pos = 0;
-  while (*buffer != '\"' && *buffer != '\0') buffer++;
+  while (**buffer == ' ')
+    {
+      (*buffer)++;
+    }
 
-  *container = ++buffer;
-
-  while (*buffer != '\"' && *buffer != '\0') buffer++;
-  *buffer = '\0';
-  buffer++;
-  return buffer;
 }
 
 template<class T>
 class Tree {
  private:
   size_t n_nodes = 0;
+
+  Node<std::string_view *> *loadNode (char **buffer)
+  {
+    Node<std::string_view *> *node = nullptr;
+    size_t n_symbols = 0;
+    skipSpaces(buffer);
+    if (**buffer == '{')
+      {
+        (*buffer)++;
+        skipSpaces(buffer);
+        sscanf(*buffer,  "%*s%n", &n_symbols);
+        std::string_view* data = new std::string_view(*buffer, n_symbols);
+
+
+        (*buffer) += n_symbols;
+        (*buffer)++;
+        skipSpaces (buffer);
+
+        auto node = new Node<std::string_view*>(data, 0);
+        if(*data == "@") node = nullptr;
+        if(**buffer == '}')
+          {
+            (*buffer)++;
+            return node;
+          }
+
+        node->left = loadNode(buffer);
+        node->right = loadNode(buffer);
+
+        if(node->right) node->right->parent = node;
+        if(node->left) node->left->parent = node;
+        skipSpaces(buffer);
+
+        if(**buffer == '}')
+          {
+            (*buffer)++;
+            return node;
+          }
+         return nullptr;
+      }
+    return nullptr;
+  }
 
   void dumpSubTree (Node<T> *node, std::ofstream &dump_file)
   {
@@ -101,67 +139,15 @@ class Tree {
   void writeSubTreeToFile (Node<T> *node, std::ofstream &file)
   {
     file << serialize (node);
-    if(node)
+    if (node)
       {
         if (node->left || node->right)
           {
-            file << "{";
+            file << " { ";
             writeSubTreeToFile (node->left, file);
-            file << " ";
+            file << " } { ";
             writeSubTreeToFile (node->right, file);
-            file << "}";
-          }
-      }
-  }
-
-  void loadLeftSubTree (char **buffer, char *arg, Node<T> *parent)
-  {
-    *buffer = parseArg (*buffer, &arg);
-    if (strcmp (arg, "@") == 0)
-      {
-        parent->left = nullptr;
-        return;
-      }
-    else
-      {
-        auto node = newNode (arg);
-        connectNodeLeft (parent, node);
-
-        if (**buffer == '{')
-          {
-            loadLeftSubTree (buffer, arg, node);
-            loadRightSubTree (buffer, arg, node);
-          }
-        else
-          {
-            node->left = nullptr;
-            node->right = nullptr;
-          }
-      }
-  }
-
-  void loadRightSubTree (char **buffer, char *arg, Node<T> *parent)
-  {
-    *buffer = parseArg (*buffer, &arg);
-    if (strcmp (arg, "@") == 0)
-      {
-        parent->right = nullptr;
-        return;
-      }
-    else
-      {
-        auto node = newNode (arg);
-        connectNodeRight (parent, node);
-
-        if (**buffer == '{')
-          {
-            loadLeftSubTree (buffer, arg, node);
-            loadRightSubTree (buffer, arg, node);
-          }
-        else
-          {
-            node->left = nullptr;
-            node->right = nullptr;
+            file << " }";
           }
       }
   }
@@ -184,9 +170,9 @@ class Tree {
     return nullptr;
   }
 
-  void createRoot (const T value)
+  void createRoot (const T value, int type)
   {
-    root = new Node<T> (value);
+    root = new Node<T> (value, type);
     n_nodes++;
   }
 
@@ -247,23 +233,8 @@ class Tree {
     File file{};
     file = loadFile (filename);
     char *buffer = file.raw_data;
-    char *arg = nullptr;
 
-    if (*buffer == '{')
-      {
-        buffer = parseArg (buffer, &arg);
-        createRoot (arg);
-
-        if (*buffer == '{')
-          {
-            loadLeftSubTree (&buffer, arg, root);
-            loadRightSubTree (&buffer, arg, root);
-          }
-      }
-    else
-      {
-        perror ("File format error!");
-      }
+    root = loadNode (&buffer);
   }
 
   void dump (const char *filename)

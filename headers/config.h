@@ -7,7 +7,7 @@ const int MAX_VARIABLE_LENGTH = 256;
 const int MAX_FUNCTION_BUFFER = 8192;
 
 enum NodeTypes {
-    PROGRAMM_ROOT = 0,
+    PROGRAM_ROOT = 0,
     DECLARATION = 1,
     FUNCTION = 2,
     VARLIST = 3,
