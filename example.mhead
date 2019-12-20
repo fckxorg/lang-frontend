@@ -1,0 +1,24 @@
+slave factorial (number)
+join_this_world
+   new_blood result;
+   hope_that (number == 0)
+   join_this_world
+      result = 1;
+   end_life
+   hope_that (number > 0)
+   join_this_world
+      new_blood sinner;
+      sinner = number - 1;
+      result = number * do_my_dirty_work factorial (sinner);
+   end_life
+   i_wish_for_death result;
+end_life
+
+slave main ()
+join_this_world
+    new_blood number;
+    pray_to_God number;
+    number = do_my_dirty_work factorial (number);
+    God_take number;
+    i_wish_for_death number;
+end_life
