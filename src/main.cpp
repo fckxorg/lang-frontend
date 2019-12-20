@@ -391,7 +391,7 @@ Tree<string_view *> *buildFunctionsTree (Function *functions, size_t n_functions
 
 int main ()
 {
-  /*FILE *input = fopen ("example.mhead", "r");
+  FILE *input = fopen ("example.mhead", "r");
   fseek (input, 0, SEEK_END);
   size_t file_size = ftell (input);
   rewind (input);
@@ -405,13 +405,7 @@ int main ()
   Function *function_structs = buildFunctionStructs (functions, number_of_functions);
 
   auto tree = buildFunctionsTree (function_structs, number_of_functions);
-  tree->saveToFile ("../sample.ast");*/
-
-  Tree<string_view *>  loadedTree;
-  loadedTree.loadFromFile ("../sample.ast");
-  loadedTree.fixTypes (loadedTree.getRoot ());
-  loadedTree.dump("../loaded.dot");
-  //system ("dot -Tpng ../dump.dot > ../dump.png");
-
+  tree->fixBlock(tree->getRoot());
+  tree->saveToFile ("../sample.ast");
   return 0;
 }

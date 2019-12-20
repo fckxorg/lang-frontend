@@ -84,40 +84,39 @@ class Tree {
   {
     Node<std::string_view *> *node = nullptr;
     size_t n_symbols = 0;
-    skipSpaces(buffer);
+    skipSpaces (buffer);
     if (**buffer == '{')
       {
         (*buffer)++;
-        skipSpaces(buffer);
-        sscanf(*buffer,  "%*s%n", &n_symbols);
-        std::string_view* data = new std::string_view(*buffer, n_symbols);
-
+        skipSpaces (buffer);
+        sscanf (*buffer, "%*s%n", &n_symbols);
+        std::string_view *data = new std::string_view (*buffer, n_symbols);
 
         (*buffer) += n_symbols;
         (*buffer)++;
         skipSpaces (buffer);
 
-        auto node = new Node<std::string_view*>(data, 0);
-        if(*data == "@") node = nullptr;
-        if(**buffer == '}')
+        auto node = new Node<std::string_view *> (data, 0);
+        if (*data == "@") node = nullptr;
+        if (**buffer == '}')
           {
             (*buffer)++;
             return node;
           }
 
-        node->left = loadNode(buffer);
-        node->right = loadNode(buffer);
+        node->left = loadNode (buffer);
+        node->right = loadNode (buffer);
 
-        if(node->right) node->right->parent = node;
-        if(node->left) node->left->parent = node;
-        skipSpaces(buffer);
+        if (node->right) node->right->parent = node;
+        if (node->left) node->left->parent = node;
+        skipSpaces (buffer);
 
-        if(**buffer == '}')
+        if (**buffer == '}')
           {
             (*buffer)++;
             return node;
           }
-         return nullptr;
+        return nullptr;
       }
     return nullptr;
   }
@@ -257,9 +256,9 @@ class Tree {
     return 1 + n_left_subtree + n_right_subtree;
   }
 
-  void fixTypes(Node<std::string_view*>* subtree_root)
+  void fixTypes (Node<std::string_view *> *subtree_root)
   {
-    if(subtree_root)
+    if (subtree_root)
       {
         if (*(subtree_root->data) == "PROGRAM_ROOT") subtree_root->type = PROGRAM_ROOT;
         else if (*(subtree_root->data) == "DECLARATION") subtree_root->type = DECLARATION;
@@ -286,9 +285,33 @@ class Tree {
         else if (isdigit ((*(subtree_root->data))[0])) subtree_root->type = NUMBER;
         else subtree_root->type = ID;
 
-        if(subtree_root->left) fixTypes (subtree_root->left);
-        if(subtree_root->right) fixTypes (subtree_root->right);
+        if (subtree_root->left) fixTypes (subtree_root->left);
+        if (subtree_root->right) fixTypes (subtree_root->right);
       }
+  }
+
+  void fixBlock (Node<std::string_view *> *subtree_root)
+  {
+    if (subtree_root->type == BLOCK)
+      {
+        auto op_node = new Node<std::string_view *> (nullptr, OP);
+        if (subtree_root->left)
+          {
+            op_node->left = subtree_root->left;
+            op_node->left->parent = op_node;
+            subtree_root->left = nullptr;
+          }
+        if (subtree_root->right)
+          {
+            op_node->right = subtree_root->right;
+            op_node->right->parent = op_node;
+            subtree_root->right = nullptr;
+          }
+        subtree_root->right = op_node;
+        subtree_root->right->parent = subtree_root;
+      }
+    if (subtree_root->left) fixBlock (subtree_root->left);
+    if (subtree_root->right) fixBlock (subtree_root->right);
   }
 
 };
